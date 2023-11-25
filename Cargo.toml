@@ -1,0 +1,11 @@
+[package]
+name = "james_cage_white"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serenity = "0.11.7"
+tokio = "1.34.0"
+webhook = "2.1.2"
