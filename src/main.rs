@@ -13,6 +13,8 @@ use serenity::model::prelude::*;
 use serenity::model::channel::Message;
 use crate::commands::{JAMES};
 
+const DISCORD_TOKEN: &str = "MTE3Nzg1MTIyODA2NDA3MTc4MA.GwEGZU.2ge9U-D7KCYEIAfrp17MLGqFy9rT0yjLsflYEs";
+
 #[help]
 async fn my_help(
     context: &Context,
@@ -31,7 +33,7 @@ async fn my_help(
 #[tokio::main]
 async fn main() {
     // Configure the client with your Discord bot token in the environment.
-    let token = env::var("DISCORD_TOKEN").expect("Expected a discord bot login token");
+    let token = DISCORD_TOKEN;
     let http = Http::new(&token);
 
     // Get the bot ID to allow mentions

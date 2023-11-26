@@ -15,6 +15,6 @@ RUN cargo chef cook --recipe-path recipe.json
 COPY . .
 RUN cargo build --release
 
-FROM rust:1.65-slim AS james_cage_white
+FROM rust:1.72.0-slim AS james_cage_white
 COPY --from=builder /app/target/release/james_cage_white /usr/local/bin
 ENTRYPOINT ["/usr/local/bin/james_cage_white"]
