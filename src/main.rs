@@ -13,8 +13,6 @@ use serenity::model::prelude::*;
 use serenity::model::channel::Message;
 use crate::commands::{JAMES};
 
-const DISCORD_TOKEN: &str = "MTE3Nzg1MTIyODA2NDA3MTc4MA.G93mLQ.ydc-R3ZfxTYBTR_-wE7LW80fOgkb8BamkK0d30";
-
 #[help]
 async fn my_help(
     context: &Context,
