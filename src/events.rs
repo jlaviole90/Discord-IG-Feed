@@ -3,7 +3,6 @@ use serenity::client::{Context, EventHandler};
 use serenity::model::gateway::Ready;
 use serenity::model::prelude::*;
 use crate::commands::{FEED_INIT, FEED_START, TEST, TEST_RESP};
-use crate::ig_feeder::Feed;
 
 pub struct Handler;
 
@@ -30,7 +29,7 @@ impl EventHandler for Handler {
                 println!("Error sending message: {why:?}");
             }
             // prompt user to begin now or fetch all posts?
-            Feed::new(msg.channel_id, ctx).listen();
+            // Feed::new(msg.channel_id, ctx).listen();
         }
 
     }
