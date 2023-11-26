@@ -3,6 +3,7 @@ mod events;
 mod commands;
 
 use std::collections::HashSet;
+use std::env;
 
 use serenity::framework::standard::{CommandGroup, help_commands, CommandResult, HelpOptions, Args, StandardFramework};
 use serenity::framework::standard::macros::help;
@@ -32,7 +33,7 @@ async fn my_help(
 #[tokio::main]
 async fn main() {
     // Configure the client with your Discord bot token in the environment.
-    let token = DISCORD_TOKEN;
+    let token = env::var("DISCORD_TOKEN").expect("Expected a discord bot login token");
     let http = Http::new(&token);
 
     // Get the bot ID to allow mentions
