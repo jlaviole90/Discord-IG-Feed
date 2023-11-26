@@ -14,8 +14,6 @@ mod events;
 mod commands;
 mod models;
 
-
-
 #[help]
 async fn my_help(
     context: &Context,
@@ -33,7 +31,7 @@ async fn my_help(
 
 #[tokio::main]
 async fn main() {
-    let token = DISCORD_TOKEN;
+    let token = std::env::var("DISCORD_TOKEN").unwrap();
     let http = Http::new(&token);
 
     let bot_id = match http.get_current_user().await {
