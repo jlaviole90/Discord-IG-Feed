@@ -2,11 +2,8 @@
 pub const JAMES: &str = "james ";
 
 // COMMANDS
-pub const FEED_START: &str = "~very cool very swag~";
-pub const FATE: &str = "fate ";
-
-pub const TEST: &str = "!ping";
+pub const TEST: &str = "very cool very swag";
+pub const NEW: &str = "new";
 
 // RESPONSES
-pub const FEED_INIT: &str = "I like it!";
-pub const TEST_RESP: &str = "Pong!";
+pub const TEST_RESP: &str = "I like it!";
