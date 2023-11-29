@@ -1,12 +1,15 @@
+use std::sync::Arc;
+use std::time::Duration;
 use chrono::prelude::DateTime;
 use reqwest::*;
 use serenity::async_trait;
 use serenity::client::{Context, EventHandler};
 use serenity::framework::standard::CommandError;
+use serenity::http::Http;
 use serenity::model::gateway::Ready;
 use serenity::model::prelude::*;
 
-use crate::commands::{JAMES, NEW, TEST, TEST_RESP};
+use crate::commands::{JAMES, NEW, POSTS, TEST, TEST_RESP};
 use crate::models::{Embeds, Post};
 
 const API: &str = "https://jcw-26b2f638ef03.herokuapp.com/get-latest";
@@ -26,9 +29,6 @@ impl EventHandler for Handler {
                 println!("Error sending message: {why:?}");
             }
         }
-        // TODO: Initialize the channel where the bot will post all new updates
-        // let channel: ChannelId = msg.channel_id;
-        // Feed::new(msg.channel_id, ctx).listen();
 
         /*
          *  grab the latest JCW IG post and create it in discord on command
@@ -46,29 +46,36 @@ impl EventHandler for Handler {
             } else {
                 post = response.unwrap();
             }
-
             let emb: &Embeds = post.embeds.first().unwrap();
+            post_msg(&ctx.http, emb, &msg).await;
+        }
 
-            match msg.channel_id.send_message(&ctx.http, |m| {
-                m.add_file(AttachmentType::Image(
-                    Url::parse(&emb.image)
-                        .unwrap())
-                );
-                m.content(
-                    format!("{time} \n {desc}",
-                            time = DateTime::from_timestamp(emb.timestamp, 0)
-                                .unwrap()
-                                .format(DATE_FORMAT)
-                                .to_string(),
-                            desc = emb.description)
-                );
-                return m;
-            }).await {
-                Ok(_) =>
-                    Ok(()),
-                Err(why) =>
-                    Err(CommandError::from(why)),
-            }.expect("Posting to discord failed");
+        /*
+         *  update the chosen channel indefinitely, with new posts (if available)
+         *  being delivered every 2 minutes.
+         */
+        if msg.content == format!("{prefix}{command}", prefix = JAMES, command = POSTS) {
+            let mut last_stmp: i64 = Timestamp::now().unix_timestamp();
+            loop {
+                let mut post: Post = Post::default();
+                let response = get(API)
+                    .await
+                    .expect("Failed to retrieve newest post")
+                    .json::<Post>()
+                    .await;
+                if let Err(why) = response {
+                    println!("JSON not valid: {why:?}")
+                } else {
+                    post = response.unwrap();
+                }
+                let emb: &Embeds = post.embeds.first().unwrap();
+
+                if emb.timestamp != last_stmp {
+                    last_stmp = emb.timestamp;
+                    post_msg(&ctx.http, emb, &msg).await;
+                    tokio::time::sleep(Duration::from_secs(120)).await;
+                }
+            }
         }
     }
 
@@ -77,4 +84,27 @@ impl EventHandler for Handler {
     async fn ready(&self, _: Context, ready: Ready) {
         println!("{} is connected", ready.user.name);
     }
+}
+
+async fn post_msg(http: &Arc<Http>, emb: &Embeds, msg: &Message) {
+    match msg.channel_id.send_message(http, |m| {
+        m.add_file(AttachmentType::Image(
+            Url::parse(&emb.image)
+                .unwrap())
+        );
+        m.content(
+            format!("{time} \n {desc}",
+                    time = DateTime::from_timestamp(emb.timestamp, 0)
+                        .unwrap()
+                        .format(DATE_FORMAT)
+                        .to_string(),
+                    desc = emb.description)
+        );
+        return m;
+    }).await {
+        Ok(_) =>
+            Ok(()),
+        Err(why) =>
+            Err(CommandError::from(why)),
+    }.expect("Posting to discord failed");
 }

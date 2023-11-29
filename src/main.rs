@@ -9,10 +9,11 @@ use serenity::prelude::*;
 
 use crate::commands::JAMES;
 
-mod ig_feeder;
 mod events;
 mod commands;
 mod models;
+
+const DISCORD_TOKEN: &str = "MTE3Nzg1MTIyODA2NDA3MTc4MA.Gm2qop.eK4-4q3WzEzKDuocUtA3OkRKW4IUTzOqPc-BIU";
 
 #[help]
 async fn my_help(
@@ -31,7 +32,7 @@ async fn my_help(
 
 #[tokio::main]
 async fn main() {
-    let token = std::env::var("DISCORD_TOKEN").unwrap();
+    let token = DISCORD_TOKEN;
     let http = Http::new(&token);
 
     let bot_id = match http.get_current_user().await {
