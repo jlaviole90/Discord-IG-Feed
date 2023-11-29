@@ -13,7 +13,7 @@ mod events;
 mod commands;
 mod models;
 
-const DISCORD_TOKEN: &str = "MTE3Nzg1MTIyODA2NDA3MTc4MA.Gm2qop.eK4-4q3WzEzKDuocUtA3OkRKW4IUTzOqPc-BIU";
+const DISCORD_TOKEN: &str = "";
 
 #[help]
 async fn my_help(
