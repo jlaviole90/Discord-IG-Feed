@@ -1,65 +1,77 @@
+use std::string::ToString;
+use rand::{Rng};
 use reqwest::{Client, Proxy};
 use crate::models::{Post, Embeds, Node3, Root};
 
 const IG_HOST: &str = "https://www.instagram.com/api/v1/users/web_profile_info/?username=jamescagewhite";
-const PROXY_URL: &str = "https://api.proxyscrape.com/v2/?request=displayproxies&protocol=http&country=us&ssl=all&anonymity=elite";
 const USER_AGENT: &str = "Mozilla/5.0 (Linux; Android 9; GM1903 Build/PKQ1.190110.001; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/75.0.3770.143 Mobile Safari/537.36 Instagram 103.1.0.15.119 Android (28/9; 420dpi; 1080x2260; OnePlus; GM1903; OnePlus7; qcom; sv_SE; 164094539)";
-
+struct GeoNodeProxy {
+    ip: String,
+    port: String
+}
 pub struct IGChannel {
-    proxies: Vec<Proxy>
+    proxies: Vec<GeoNodeProxy>,
+    prx_iter: usize
 }
 impl Default for IGChannel {
     fn default() -> Self {
         IGChannel {
-            proxies: Vec::new()
+            proxies: vec![
+                GeoNodeProxy {ip: "51.159.149.67".to_string(), port: "9000".to_string()},
+                GeoNodeProxy {ip: "51.159.149.67".to_string(), port: "9001".to_string()},
+                GeoNodeProxy {ip: "51.159.149.67".to_string(), port: "9002".to_string()},
+                GeoNodeProxy {ip: "51.159.149.67".to_string(), port: "9003".to_string()},
+                GeoNodeProxy {ip: "51.159.149.67".to_string(), port: "9004".to_string()},
+                GeoNodeProxy {ip: "51.159.149.67".to_string(), port: "9005".to_string()},
+                GeoNodeProxy {ip: "51.159.149.67".to_string(), port: "9006".to_string()},
+                GeoNodeProxy {ip: "51.159.149.67".to_string(), port: "9007".to_string()},
+                GeoNodeProxy {ip: "51.159.149.67".to_string(), port: "9008".to_string()},
+                GeoNodeProxy {ip: "51.159.149.67".to_string(), port: "9009".to_string()},
+                GeoNodeProxy {ip: "51.159.149.67".to_string(), port: "9010".to_string()}],
+            prx_iter: 0
         }
     }
 }
 
 impl IGChannel {
-    async fn fetch_proxies() -> Vec<Proxy> {
-        // Collect a set of proxies and map them to the reqwest struct.
-        let client = Client::new();
-        client.get(PROXY_URL).send()
-            .await.expect("Unable to get proxies from provider.")
-            .text()
-            .await.expect("Failed to deserialize proxy text")
-            .lines()
-            .map(|str| -> Proxy {
-                Proxy::http(str.to_string()).unwrap()
-            })
-            .collect()
+    fn fetch_proxies(&mut self) -> Proxy {
+        // Grab a random GeoNode proxy.
+        self.prx_iter = rand::thread_rng().gen_range(0..10);
+        let cur_prx: &GeoNodeProxy = self.proxies.get(self.prx_iter).unwrap();
+        // Connect to random HTTPS proxy.
+        Proxy::https(format!("{current_prx}:{current_prt}",
+            current_prx=cur_prx.ip,
+            current_prt=cur_prx.port)
+        ).unwrap()
+            .basic_auth(
+                "",
+                "")
     }
     pub async fn rec_new(&mut self) -> Post {
-        // Ensure there are still proxies in the list, and pop the next one.
-        let mut proxy: Option<Proxy> = self.proxies.pop();
-        match proxy {
-            None => {
-                // Refill the proxy list and set the next one.
-                self.proxies = IGChannel::fetch_proxies().await;
-                proxy = self.proxies.pop();
-            }
-            _ => {}
-        };
-
         // Build the client with necessary headers, and the next proxy
-        let client: Client = Client::builder()
-            .proxy(proxy.expect("Failed to pull a fresh proxy."))
-            .user_agent(USER_AGENT)
-            .build()
-            .unwrap();
+        let proxy = self.fetch_proxies();
+        let root =
+            match Client::builder()
+                .proxy(proxy)
+                .user_agent(USER_AGENT)
+                .build().expect("Failed to build HTTP client...")
+                .get(IG_HOST).send().await {
+                Ok(resp) => {
+                    match resp.json::<Root>().await {
+                        Ok(data) => data,
+                        Err(why) => {
+                            println!("Failed to decode IG response: \n{:?},\n", why);
+                            return Post::default();
+                        }
+                    }
+                },
+                Err(why) => {
+                    println!("Failed to retrieve IG data.\n{:?}\n", why);
+                    return Post::default();
+                }
+            };
 
-        let json_resp = client.get(IG_HOST).send().await;
-        if let Err(why) = json_resp {
-            panic!("Failed to retrieve IG data: \n{:?}\n", why)
-        }
-
-        let root = json_resp.unwrap().json::<Root>().await;
-        if let Err(why) = root {
-            panic!("Failed to decode IG response: \n{:?},\n", why)
-        }
-
-        let latest_post: Node3 = root.unwrap()
+        let latest_post: Node3 = root
             .data.user.edge_owner_to_timeline_media.edges
             .iter()
             .map(
