@@ -12,6 +12,7 @@ use crate::commands::JAMES;
 mod events;
 mod commands;
 mod models;
+mod proxy;
 
 const DISCORD_TOKEN: &str = "";
 
@@ -37,7 +38,7 @@ async fn main() {
 
     let bot_id = match http.get_current_user().await {
         Ok(info) => info.id,
-        Err(why) => panic!("Could not access user info {:?}", why),
+        Err(why) => panic!("Could not access user info {:?}, TOKEN LIKELY EXPIRED!", why),
     };
 
     let framework = StandardFramework::new()

@@ -11,8 +11,8 @@ use serenity::model::prelude::*;
 
 use crate::commands::{JAMES, NEW, POSTS, TEST, TEST_RESP};
 use crate::models::{Embeds, Post};
+use crate::proxy::{IGChannel};
 
-const API: &str = "https://jcw-26b2f638ef03.herokuapp.com/get-latest";
 const DATE_FORMAT: &str = "%m-%d-%Y %H:%M";
 
 pub struct Handler;
@@ -35,19 +35,14 @@ impl EventHandler for Handler {
          *  james new -> <latest IG post>
          */
         if msg.content == format!("{prefix}{command}", prefix = JAMES, command = NEW) {
-            let mut post: Post = Post::default();
-            let response = get(API)
-                .await
-                .expect("Failed to retrieve newest post")
-                .json::<Post>()
-                .await;
-            if let Err(why) = response {
-                println!("JSON not valid: {why:?}")
-            } else {
-                post = response.unwrap();
+            let mut ig_channel = IGChannel::default();
+
+            let post: Post = ig_channel.rec_new().await;
+            let emb: Option<&Embeds> = post.embeds.first();
+
+            if let Some(emb) = emb {
+                post_msg(&ctx.http, emb, &msg).await;
             }
-            let emb: &Embeds = post.embeds.first().unwrap();
-            post_msg(&ctx.http, emb, &msg).await;
         }
 
         /*
@@ -56,25 +51,22 @@ impl EventHandler for Handler {
          */
         if msg.content == format!("{prefix}{command}", prefix = JAMES, command = POSTS) {
             let mut last_stmp: i64 = Timestamp::now().unix_timestamp();
+            let mut ig_channel = IGChannel::default();
             loop {
-                let mut post: Post = Post::default();
-                let response = get(API)
-                    .await
-                    .expect("Failed to retrieve newest post")
-                    .json::<Post>()
-                    .await;
-                if let Err(why) = response {
-                    println!("JSON not valid: {why:?}")
-                } else {
-                    post = response.unwrap();
-                }
-                let emb: &Embeds = post.embeds.first().unwrap();
+                println!("Good morning!");
+                let post: Post = ig_channel.rec_new().await;
+                let emb: Option<&Embeds> = post.embeds.first();
 
-                if emb.timestamp != last_stmp {
-                    last_stmp = emb.timestamp;
-                    post_msg(&ctx.http, emb, &msg).await;
-                    tokio::time::sleep(Duration::from_secs(120)).await;
+                if let Some(emb) = emb {
+                    println!("Last Post: {timestamp}", timestamp=emb.timestamp);
+                    if emb.timestamp != last_stmp {
+                        println!("Very cool very swag I like it!");
+                        last_stmp = emb.timestamp;
+                        post_msg(&ctx.http, emb, &msg).await;
+                    }
                 }
+                println!("zzzZZZzzzZZZzzzZZZ\n");
+                tokio::time::sleep(Duration::from_secs(120)).await;
             }
         }
     }
@@ -82,7 +74,7 @@ impl EventHandler for Handler {
     // Handler used for the "ready" event.
     // Print what the Bot username is.
     async fn ready(&self, _: Context, ready: Ready) {
-        println!("{} is connected", ready.user.name);
+        println!("{} is connected\n", ready.user.name);
     }
 }
 
