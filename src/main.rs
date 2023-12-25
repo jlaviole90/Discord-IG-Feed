@@ -1,7 +1,9 @@
 use std::collections::HashSet;
 
-use serenity::framework::standard::{Args, CommandGroup, CommandResult, help_commands, HelpOptions, StandardFramework};
 use serenity::framework::standard::macros::help;
+use serenity::framework::standard::{
+    help_commands, Args, CommandGroup, CommandResult, HelpOptions, StandardFramework,
+};
 use serenity::http::Http;
 use serenity::model::channel::Message;
 use serenity::model::prelude::*;
@@ -9,8 +11,8 @@ use serenity::prelude::*;
 
 use crate::commands::JAMES;
 
-mod events;
 mod commands;
+mod events;
 mod models;
 mod proxy;
 
@@ -25,7 +27,6 @@ async fn my_help(
     groups: &[&'static CommandGroup],
     owners: HashSet<UserId>,
 ) -> CommandResult {
-
     // TODO: setup real help display
     let _ = help_commands::with_embeds(context, msg, args, help_options, groups, owners).await;
     Ok(())
@@ -38,19 +39,19 @@ async fn main() {
 
     let bot_id = match http.get_current_user().await {
         Ok(info) => info.id,
-        Err(why) => panic!("Could not access user info {:?}, TOKEN LIKELY EXPIRED!", why),
+        Err(why) => panic!(
+            "Could not access user info {:?}, TOKEN LIKELY EXPIRED!",
+            why
+        ),
     };
 
     let framework = StandardFramework::new()
         .help(&MY_HELP)
-        .configure(|c| c
-            .on_mention(Some(bot_id))
-            .prefix(JAMES));
+        .configure(|c| c.on_mention(Some(bot_id)).prefix(JAMES));
 
     let intents = GatewayIntents::GUILD_MESSAGES
         | GatewayIntents::DIRECT_MESSAGES
         | GatewayIntents::MESSAGE_CONTENT;
-
 
     // Create a new instance of the Client, logging in as a bot. This will automatically prepend
     // your bot token with "Bot ", which is a requirement by Discord for bot users.

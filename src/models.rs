@@ -3,13 +3,13 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize)]
 pub struct Post {
     pub username: String,
-    pub(crate) embeds: Vec<Embeds>
+    pub(crate) embeds: Vec<Embeds>,
 }
 impl Default for Post {
-    fn default () -> Post {
+    fn default() -> Post {
         Post {
             username: String::new(),
-            embeds: Vec::new()
+            embeds: Vec::new(),
         }
     }
 }
@@ -25,7 +25,7 @@ impl Default for Embeds {
         Embeds {
             description: String::new(),
             timestamp: 0,
-            image: String::new()
+            image: String::new(),
         }
     }
 }
