@@ -11,12 +11,11 @@ use serenity::prelude::*;
 
 use crate::commands::JAMES;
 
+mod auth;
 mod commands;
 mod events;
 mod models;
 mod proxy;
-
-const DISCORD_TOKEN: &str = "";
 
 #[help]
 async fn my_help(
@@ -34,7 +33,7 @@ async fn my_help(
 
 #[tokio::main]
 async fn main() {
-    let token = DISCORD_TOKEN;
+    let token = auth::get_token();
     let http = Http::new(&token);
 
     let bot_id = match http.get_current_user().await {

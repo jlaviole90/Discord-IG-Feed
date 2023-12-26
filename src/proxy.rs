@@ -1,3 +1,6 @@
+use std::time::{SystemTime, UNIX_EPOCH};
+
+use crate::auth;
 use crate::models::{Embeds, Post, Root};
 use rand::Rng;
 use reqwest::{Client, Proxy};
@@ -12,6 +15,8 @@ struct GeoNodeProxy {
 pub struct IGChannel {
     proxies: Vec<GeoNodeProxy>,
     prx_iter: usize,
+    pub last_post: Post,
+    last_fetch: SystemTime,
 }
 impl Default for IGChannel {
     fn default() -> Self {
@@ -63,6 +68,8 @@ impl Default for IGChannel {
                 },
             ],
             prx_iter: 0,
+            last_post: Post::default(),
+            last_fetch: UNIX_EPOCH,
         }
     }
 }
@@ -79,10 +86,14 @@ impl IGChannel {
             current_prt = cur_prx.port
         ))
         .unwrap()
-        .basic_auth("", "")
+        .basic_auth(auth::get_prx_user().as_str(), auth::get_prx_pass().as_str())
     }
 
-    pub async fn rec_new(&mut self) -> Post {
+    pub async fn get_last_post(&mut self) {
+        if self.last_fetch.elapsed().unwrap().as_secs() <= 120 {
+            return;
+        }
+
         // Build the client with necessary headers, and the next proxy
         let proxy = self.fetch_proxies();
         let latest_post = match Client::builder()
@@ -98,12 +109,12 @@ impl IGChannel {
                 Ok(data) => data,
                 Err(why) => {
                     println!("Failed to decode IG response: \n{:?},\n", why);
-                    return Post::default();
+                    return;
                 }
             },
             Err(why) => {
                 println!("Failed to retrieve IG data.\n{:?}\n", why);
-                return Post::default();
+                return;
             }
         }
         .data
@@ -116,9 +127,9 @@ impl IGChannel {
         .next()
         .expect("Unable to parse JSON posts.");
 
-        Post {
+        let last_post = Post {
             username: "jamescagewhite".to_string(),
-            embeds: vec![Embeds {
+            embeds: Embeds {
                 description: latest_post
                     .edge_media_to_caption
                     .edges
@@ -133,7 +144,9 @@ impl IGChannel {
                     latest_post.display_url
                 },
                 timestamp: latest_post.taken_at_timestamp,
-            }],
-        }
+            },
+        };
+        self.last_post = last_post;
+        self.last_fetch = SystemTime::now();
     }
 }

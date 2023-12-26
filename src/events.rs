@@ -36,12 +36,10 @@ impl EventHandler for Handler {
          *  james new -> <latest IG post>
          */
         if msg.content == format!("{prefix}{command}", prefix = JAMES, command = NEW) {
-            let post: Post = ig_channel.rec_new().await;
-            let emb: Option<&Embeds> = post.embeds.first();
-
-            if let Some(emb) = emb {
-                post_msg(&ctx.http, emb, &msg).await;
-            }
+            ig_channel.get_last_post().await;
+            let post: &Post = &ig_channel.last_post;
+            let emb: &Embeds = &post.embeds;
+            post_msg(&ctx.http, emb, &msg).await;
         }
 
         /*
@@ -52,16 +50,15 @@ impl EventHandler for Handler {
             let mut last_stmp: i64 = Timestamp::now().unix_timestamp();
             loop {
                 println!("Good morning!");
-                let post: Post = ig_channel.rec_new().await;
-                let emb: Option<&Embeds> = post.embeds.first();
+                ig_channel.get_last_post().await;
+                let post: &Post = &ig_channel.last_post;
+                let emb: &Embeds = &post.embeds;
 
-                if let Some(emb) = emb {
-                    println!("Last Post: {timestamp}", timestamp = emb.timestamp);
-                    if emb.timestamp != last_stmp {
-                        println!("Very cool very swag I like it!");
-                        last_stmp = emb.timestamp;
-                        post_msg(&ctx.http, emb, &msg).await;
-                    }
+                println!("Last Post: {timestamp}", timestamp = emb.timestamp);
+                if emb.timestamp != last_stmp {
+                    println!("Very cool very swag I like it!");
+                    last_stmp = emb.timestamp;
+                    post_msg(&ctx.http, emb, &msg).await;
                 }
                 println!("zzzZZZzzzZZZzzzZZZ\n");
                 tokio::time::sleep(Duration::from_secs(120)).await;

@@ -1,20 +1,18 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
 pub struct Post {
     pub username: String,
-    pub(crate) embeds: Vec<Embeds>,
+    pub embeds: Embeds,
 }
 impl Default for Post {
     fn default() -> Post {
         Post {
             username: String::new(),
-            embeds: Vec::new(),
+            embeds: Embeds::default(),
         }
     }
 }
 
-#[derive(Serialize, Deserialize)]
 pub struct Embeds {
     pub description: String,
     pub timestamp: i64,
@@ -33,7 +31,6 @@ impl Default for Embeds {
 /*
  *  Instagram API data-model
  */
-
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Root {
