@@ -7,7 +7,7 @@ use serenity::http::Http;
 use serenity::model::gateway::Ready;
 use serenity::model::prelude::*;
 use std::sync::Arc;
-use std::time::Duration;
+use std::time::{Duration, SystemTime};
 
 use crate::commands::{JAMES, NEW, POSTS, TEST, TEST_RESP};
 use crate::models::{Embeds, Post};
@@ -21,6 +21,7 @@ impl EventHandler for Handler {
     // Message Event Handler
     async fn message(&self, ctx: Context, msg: Message) {
         let mut ig_channel = IGChannel::default();
+        ig_channel.deploy_proxy_server().await;
         /*
          *  Test command to verify the bot is running
          *  "very cool very swag" -> "I like it!"
@@ -36,7 +37,6 @@ impl EventHandler for Handler {
          *  james new -> <latest IG post>
          */
         if msg.content == format!("{prefix}{command}", prefix = JAMES, command = NEW) {
-            ig_channel.get_last_post().await;
             let post: &Post = &ig_channel.last_post;
             let emb: &Embeds = &post.embeds;
             post_msg(&ctx.http, emb, &msg).await;
@@ -45,20 +45,17 @@ impl EventHandler for Handler {
         /*
          *  update the chosen channel indefinitely, with new posts (if available)
          *  being delivered every 2 minutes.
+         *
+         *  Running two infinite loops in parralel here is slower, but more responsive.
          */
         if msg.content == format!("{prefix}{command}", prefix = JAMES, command = POSTS) {
-            let mut last_stmp: i64 = Timestamp::now().unix_timestamp();
+            let mut last_stmp: SystemTime = SystemTime::now();
             loop {
                 println!("Good morning!");
-                ig_channel.get_last_post().await;
-                let post: &Post = &ig_channel.last_post;
-                let emb: &Embeds = &post.embeds;
-
-                println!("Last Post: {timestamp}", timestamp = emb.timestamp);
-                if emb.timestamp != last_stmp {
+                if ig_channel.last_fetch != last_stmp {
                     println!("Very cool very swag I like it!");
-                    last_stmp = emb.timestamp;
-                    post_msg(&ctx.http, emb, &msg).await;
+                    last_stmp = ig_channel.last_fetch;
+                    post_msg(&ctx.http, &ig_channel.last_post.embeds, &msg).await;
                 }
                 println!("zzzZZZzzzZZZzzzZZZ\n");
                 tokio::time::sleep(Duration::from_secs(120)).await;
