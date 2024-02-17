@@ -671,6 +671,7 @@ version = "0.2.0"
 dependencies = [
  "chrono",
  "image",
+ "lazy_static",
  "rand 0.8.5",
  "reqwest",
  "select",

@@ -20,7 +20,8 @@ pub struct Handler;
 impl EventHandler for Handler {
     // Message Event Handler
     async fn message(&self, ctx: Context, msg: Message) {
-        let mut ig_channel = IGChannel::default();
+        let account = ctx.data.read().await;
+        let mut ig_channel = IGChannel::init(account.get::<IGChannel>().unwrap());
         ig_channel.deploy_proxy_server().await;
         /*
          *  Test command to verify the bot is running
@@ -33,8 +34,8 @@ impl EventHandler for Handler {
         }
 
         /*
-         *  grab the latest JCW IG post and create it in discord on command
-         *  james new -> <latest IG post>
+         *  grab the latest IG post and create it in discord on command
+         *  <prefix> new -> [latest IG post]
          */
         if msg.content == format!("{prefix}{command}", prefix = JAMES, command = NEW) {
             let post: &Post = &ig_channel.last_post;
@@ -48,6 +49,7 @@ impl EventHandler for Handler {
          *
          *  Running two infinite loops in parralel here is slower, but more responsive.
          */
+        // todo: update prefix call here
         if msg.content == format!("{prefix}{command}", prefix = JAMES, command = POSTS) {
             let mut last_stmp: SystemTime = SystemTime::now();
             loop {

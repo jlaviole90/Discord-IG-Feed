@@ -4,45 +4,93 @@ use crate::auth;
 use crate::models::{Embeds, Post, Root};
 use rand::Rng;
 use reqwest::{Client, Proxy};
+use serenity::prelude::TypeMapKey;
 use std::time::Duration;
 
-const IG_HOST: &str =
-    "https://www.instagram.com/api/v1/users/web_profile_info/?username=jamescagewhite";
+const IG_HOST: &str = "https://www.instagram.com/api/v1/users/web_profile_info/?username=";
 const USER_AGENT: &str = "Mozilla/5.0 (Linux; Android 9; GM1903 Build/PKQ1.190110.001; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/75.0.3770.143 Mobile Safari/537.36 Instagram 103.1.0.15.119 Android (28/9; 420dpi; 1080x2260; OnePlus; GM1903; OnePlus7; qcom; sv_SE; 164094539)";
-const PROXY0:  GeoNodeProxy = GeoNodeProxy { ip: "51.159.149.67", port: "9000" };
-const PROXY1:  GeoNodeProxy = GeoNodeProxy { ip: "51.159.149.67", port: "9001" };
-const PROXY2:  GeoNodeProxy = GeoNodeProxy { ip: "51.159.149.67", port: "9002" };
-const PROXY3:  GeoNodeProxy = GeoNodeProxy { ip: "51.159.149.67", port: "9003" };
-const PROXY4:  GeoNodeProxy = GeoNodeProxy { ip: "51.159.149.67", port: "9004" };
-const PROXY5:  GeoNodeProxy = GeoNodeProxy { ip: "51.159.149.67", port: "9005" };
-const PROXY6:  GeoNodeProxy = GeoNodeProxy { ip: "51.159.149.67", port: "9006" };
-const PROXY7:  GeoNodeProxy = GeoNodeProxy { ip: "51.159.149.67", port: "9007" };
-const PROXY8:  GeoNodeProxy = GeoNodeProxy { ip: "51.159.149.67", port: "9008" };
-const PROXY9:  GeoNodeProxy = GeoNodeProxy { ip: "51.159.149.67", port: "9009" };
-const PROXY10: GeoNodeProxy = GeoNodeProxy { ip: "51.159.149.67", port: "9010" };
 
 struct GeoNodeProxy {
     ip: &'static str,
     port: &'static str,
 }
+
+const PROXY0: GeoNodeProxy = GeoNodeProxy {
+    ip: "51.159.149.67",
+    port: "9000",
+};
+const PROXY1: GeoNodeProxy = GeoNodeProxy {
+    ip: "51.159.149.67",
+    port: "9001",
+};
+const PROXY2: GeoNodeProxy = GeoNodeProxy {
+    ip: "51.159.149.67",
+    port: "9002",
+};
+const PROXY3: GeoNodeProxy = GeoNodeProxy {
+    ip: "51.159.149.67",
+    port: "9003",
+};
+const PROXY4: GeoNodeProxy = GeoNodeProxy {
+    ip: "51.159.149.67",
+    port: "9004",
+};
+const PROXY5: GeoNodeProxy = GeoNodeProxy {
+    ip: "51.159.149.67",
+    port: "9005",
+};
+const PROXY6: GeoNodeProxy = GeoNodeProxy {
+    ip: "51.159.149.67",
+    port: "9006",
+};
+const PROXY7: GeoNodeProxy = GeoNodeProxy {
+    ip: "51.159.149.67",
+    port: "9007",
+};
+const PROXY8: GeoNodeProxy = GeoNodeProxy {
+    ip: "51.159.149.67",
+    port: "9008",
+};
+const PROXY9: GeoNodeProxy = GeoNodeProxy {
+    ip: "51.159.149.67",
+    port: "9009",
+};
+const PROXY10: GeoNodeProxy = GeoNodeProxy {
+    ip: "51.159.149.67",
+    port: "9010",
+};
+
 pub struct IGChannel {
     proxies: Vec<GeoNodeProxy>,
     prx_iter: usize,
+    account: String,
     pub last_post: Post,
     pub last_fetch: SystemTime,
 }
+impl TypeMapKey for IGChannel {
+    type Value = String;
+}
+
 impl Default for IGChannel {
     fn default() -> Self {
         IGChannel {
-            proxies: vec![PROXY0, PROXY1, PROXY2, PROXY3, PROXY4, PROXY5, PROXY6, PROXY7, PROXY8, PROXY9, PROXY10],
+            proxies: vec![
+                PROXY0, PROXY1, PROXY2, PROXY3, PROXY4, PROXY5, PROXY6, PROXY7, PROXY8, PROXY9,
+                PROXY10,
+            ],
             prx_iter: 0,
+            account: String::new(),
             last_post: Post::default(),
             last_fetch: UNIX_EPOCH,
         }
     }
 }
-
 impl IGChannel {
+    pub fn init(account: &str) -> Self {
+        let mut this = IGChannel::default();
+        this.account = account.to_string();
+        this
+    }
     fn fetch_proxies(&mut self) -> Proxy {
         // Grab a random GeoNode proxy.
         self.prx_iter = rand::thread_rng().gen_range(0..10);
@@ -64,7 +112,8 @@ impl IGChannel {
                 .user_agent(USER_AGENT)
                 .build()
                 .expect("Failed to build HTTP client... ")
-                .get(IG_HOST)
+                // todo: get the user name!
+                .get(IG_HOST.to_owned() + "jamescagewhite")
                 .send()
                 .await
             {
@@ -90,8 +139,9 @@ impl IGChannel {
             .next()
             .expect("Unable to parse JSON posts.");
 
+            // todo: insert proper username
             let last_post = Post {
-                username: "jamescagewhite".to_string(),
+                username: "".to_string(),
                 embeds: Embeds {
                     description: latest_post
                         .edge_media_to_caption
