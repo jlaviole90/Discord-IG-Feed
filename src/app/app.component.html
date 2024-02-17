@@ -17,7 +17,7 @@
         Integrate your bot with a dev token, and select an Instagram account to
         scrape from below.
     </p>
-    <form class="form-inputs" (submit)="greet($event, accountInput.value)">
+    <form class="form-inputs" (submit)="startServer($event, tokenInput.value)">
         <div id="token-row">
             <input
                 #tokenInput
@@ -31,8 +31,25 @@
                 id="account-input"
                 placeholder="Enter an account name..."
             />
-            <button id="account-search-button" type="submit">Search</button>
+            <button
+                id="account-search-button"
+                (click)="searchAccount($event, accountInput.value)"
+            >
+                Search
+            </button>
+        </div>
+        <div id="build-row">
+            <button *ngIf="!isRunning" id="start-button" type="submit">
+                Start
+            </button>
+            <button
+                *ngIf="isRunning"
+                id="stop-button"
+                (click)="stopServer($event)"
+            >
+                Stop
+            </button>
         </div>
     </form>
-    <p>{{ greetingMessage }}</p>
+    <p>{{ errorMessage }}</p>
 </div>

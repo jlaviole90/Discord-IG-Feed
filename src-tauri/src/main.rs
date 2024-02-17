@@ -3,6 +3,7 @@
 
 use std::collections::HashSet;
 
+use crate::commands::JAMES;
 use serenity::framework::standard::macros::help;
 use serenity::framework::standard::{
     help_commands, Args, CommandGroup, CommandResult, HelpOptions, StandardFramework,
@@ -11,8 +12,7 @@ use serenity::http::Http;
 use serenity::model::channel::Message;
 use serenity::model::prelude::*;
 use serenity::prelude::*;
-
-use crate::commands::JAMES;
+use std::env;
 
 mod auth;
 mod commands;
@@ -34,29 +34,25 @@ async fn my_help(
     Ok(())
 }
 
-// Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
+async fn search_account(account: &str) -> Result<String, String> {
+    Ok(account.to_string())
 }
 
-#[tokio::main]
-async fn main() {
-
-    tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![greet])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
-
-    let token = auth::get_token();
+// Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
+// todo: possible to return a string streamof console output???
+#[tauri::command]
+async fn start_server(token: &str) -> Result<bool, String> {
+    let token = token;
     let http = Http::new(&token);
 
     let bot_id = match http.get_current_user().await {
         Ok(info) => info.id,
-        Err(why) => panic!(
-            "Could not access user info {:?}, TOKEN LIKELY EXPIRED!",
-            why
-        ),
+        Err(why) => {
+            return Err(format!(
+                "Could not access user info {why:?}, bad token input!\nCheck token expiration!"
+            ))
+        }
     };
 
     let framework = StandardFramework::new()
@@ -80,5 +76,26 @@ async fn main() {
     // it reconnects.
     if let Err(why) = client.start().await {
         println!("Client error: {why:?}");
+        Err("{why:?}".to_string())
+    } else {
+        Ok(true)
     }
+}
+
+#[tauri::command]
+async fn stop_server() -> Result<bool, String> {
+    // todo: likely will have to implement this into a server struct
+    Ok(true)
+}
+
+#[tokio::main]
+async fn main() {
+    tauri::Builder::default()
+        .invoke_handler(tauri::generate_handler![
+            search_account,
+            start_server,
+            stop_server
+        ])
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
 }

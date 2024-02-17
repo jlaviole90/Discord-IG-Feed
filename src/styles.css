@@ -88,7 +88,6 @@ button {
     transform: translate(20%, 0);
     justify-content: center;
     width: 70%;
-    border: solid red 1px;
 
     #token-row {
         display: flex;
