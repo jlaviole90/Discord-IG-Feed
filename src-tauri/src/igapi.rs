@@ -1,5 +1,3 @@
-use std::time::{SystemTime, UNIX_EPOCH};
-
 use crate::events;
 use crate::models::{Embeds, IGAccount, Post, Root};
 use crate::proxy::*;
@@ -17,7 +15,6 @@ pub struct IGChannel {
     prx_iter: usize,
     account: String,
     pub last_post: Post,
-    pub last_fetch: SystemTime,
 }
 impl TypeMapKey for IGChannel {
     type Value = String;
@@ -33,7 +30,6 @@ impl Default for IGChannel {
             prx_iter: 0,
             account: String::new(),
             last_post: Post::default(),
-            last_fetch: UNIX_EPOCH,
         }
     }
 }
@@ -60,13 +56,13 @@ impl IGChannel {
     pub async fn deploy_proxy_server(&mut self, http: &Arc<Http>, msg: &Message) {
         println!("Instagram feed initiated for account: @{}", self.account);
         println!("User's feed will be checked every 120 seconds for new posts.");
-        let mut last_stmp: SystemTime = SystemTime::now();
+        let mut last_stmp: i64 = 0;
         loop {
             println!("Checking feed...");
             self.get_latest().await;
-            if self.last_fetch != last_stmp {
+            if self.last_post.embeds.timestamp != last_stmp {
                 println!("New post available.\nPosting now...");
-                last_stmp = self.last_fetch;
+                last_stmp = self.last_post.embeds.timestamp;
                 events::post_msg(http, &self.last_post.embeds, msg).await;
             } else {
                 println!("No new posts found.");
@@ -76,7 +72,6 @@ impl IGChannel {
     }
 
     pub async fn get_latest(&mut self) {
-        println!("Fetching latest...");
         let latest_post = match Client::builder()
             .proxy(self.fetch_proxies())
             .user_agent(USER_AGENT)
@@ -108,7 +103,6 @@ impl IGChannel {
         .next()
         .expect("Unable to parse JSON posts.");
 
-        // todo: insert proper username
         let last_post = Post {
             username: self.account.to_string(),
             embeds: Embeds {
@@ -130,7 +124,6 @@ impl IGChannel {
         };
 
         self.last_post = last_post;
-        self.last_fetch = SystemTime::now();
     }
 
     pub async fn search(&mut self, account: &str) -> Result<IGAccount, String> {
