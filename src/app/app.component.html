@@ -1,15 +1,15 @@
 <div class="container">
-    <div class="header">
-        <h2 *ngIf="account.username || accountInput" id="username">
-            &#64;{{ account.username || accountInput }}
-        </h2>
-    </div>
     <div class="body">
-        <div *ngIf="!account.username" class="account"></div>
-        <div *ngIf="account.username" class="account">
-            <img [src]="image" id="profile-pic" alt="Profile Photo" />
-            <p id="bio">{{ account.bio }}</p>
-        </div>
+        <span id="account-box">
+            <h2 *ngIf="account.username || accountInput" id="username">
+                &#64;{{ account.username || accountInput }}
+            </h2>
+            <div *ngIf="account.username" id="profile-pic-box">
+                <img [src]="image" id="profile-pic" alt="Profile Photo" />
+            </div>
+            <p *ngIf="account.username" id="bio">{{ account.bio }}</p>
+        </span>
+        <span id="server-log-box">{{ serverLogs }}</span>
     </div>
     <div class="footer">
         <div class="divider"></div>

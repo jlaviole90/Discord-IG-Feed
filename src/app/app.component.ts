@@ -20,10 +20,10 @@ export class AppComponent {
   accountInput: string = "";
   prefixInput: string = "";
   tokenInput: string = "";
-
   account: IGAccount = DefaultAccount;
-
   image: any;
+
+  serverLogs: string = "";
 
   errorMessage: string = "";
 

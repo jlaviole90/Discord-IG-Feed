@@ -60,15 +60,17 @@ button {
 }
 
 .container {
-    .header {
-        position: relative;
-        top: -50px;
-    }
-
     .body {
-        .account {
-            position: relative;
-            top: -40px;
+        position: absolute;
+        top: 0;
+        left: 5%;
+        width: 90%;
+        height: 56.25%;
+
+        #account-box {
+            float: left;
+            width: 49%;
+            height: 100%;
             #profile-pic {
                 height: 250px;
                 width: 250px;
@@ -77,6 +79,11 @@ button {
             }
             #bio {
             }
+        }
+        #server-log-box {
+            float: right;
+            width: 49%;
+            height: 100%;
         }
     }
 
