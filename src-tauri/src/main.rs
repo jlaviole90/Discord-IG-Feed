@@ -11,14 +11,29 @@ use serenity::http::Http;
 use serenity::model::channel::Message;
 use serenity::model::prelude::*;
 use serenity::prelude::*;
+use std::env;
 
-use crate::commands::JAMES;
-
-mod auth;
 mod commands;
 mod events;
+mod igapi;
 mod models;
 mod proxy;
+
+const INTENTS_A: GatewayIntents = GatewayIntents::GUILD_MESSAGES;
+const INTENTS_B: GatewayIntents = GatewayIntents::DIRECT_MESSAGES;
+const INTENTS_C: GatewayIntents = GatewayIntents::MESSAGE_CONTENT;
+
+#[tokio::main]
+async fn main() {
+    tauri::Builder::default()
+        .invoke_handler(tauri::generate_handler![
+            search_account,
+            start_server,
+            stop_server
+        ])
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
+}
 
 #[help]
 async fn my_help(
@@ -34,44 +49,37 @@ async fn my_help(
     Ok(())
 }
 
-// Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
+async fn search_account(account: &str) -> Result<models::IGAccount, String> {
+    igapi::IGChannel::default().search(account).await
 }
 
-#[tokio::main]
-async fn main() {
-
-    tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![greet])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
-
-    let token = auth::get_token();
-    let http = Http::new(&token);
+// Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
+// todo: possible to return a string streamof console output???
+#[tauri::command]
+async fn start_server(token: &str, account: &str, prefix: &str) -> Result<bool, String> {
+    let http = Http::new(token);
 
     let bot_id = match http.get_current_user().await {
         Ok(info) => info.id,
-        Err(why) => panic!(
-            "Could not access user info {:?}, TOKEN LIKELY EXPIRED!",
-            why
-        ),
+        Err(why) => {
+            return Err(format!(
+                "Could not access user info {why:?}, bad token input!\nCheck token expiration!"
+            ))
+        }
     };
 
     let framework = StandardFramework::new()
         .help(&MY_HELP)
-        .configure(|c| c.on_mention(Some(bot_id)).prefix(JAMES));
-
-    let intents = GatewayIntents::GUILD_MESSAGES
-        | GatewayIntents::DIRECT_MESSAGES
-        | GatewayIntents::MESSAGE_CONTENT;
+        .configure(|c| c.on_mention(Some(bot_id)).prefix(prefix));
 
     // Create a new instance of the Client, logging in as a bot. This will automatically prepend
     // your bot token with "Bot ", which is a requirement by Discord for bot users.
-    let mut client = Client::builder(&token, intents)
+    let mut client = Client::builder(&token, INTENTS_A | INTENTS_B | INTENTS_C)
         .event_handler(events::Handler)
         .framework(framework)
+        .type_map_insert::<igapi::IGChannel>(account.to_string())
+        .type_map_insert::<events::Handler>(prefix.to_string())
         .await
         .expect("Error creating client");
 
@@ -80,5 +88,14 @@ async fn main() {
     // it reconnects.
     if let Err(why) = client.start().await {
         println!("Client error: {why:?}");
+        Err("{why:?}".to_string())
+    } else {
+        Ok(true)
     }
+}
+
+#[tauri::command]
+async fn stop_server() -> Result<bool, String> {
+    // todo: likely will have to implement this into a server struct
+    Ok(true)
 }

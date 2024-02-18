@@ -20,10 +20,10 @@
     "windows": [
       {
         "fullscreen": false,
-        "resizable": true,
-        "title": "discord_ig_feed",
-        "width": 800,
-        "height": 600
+        "resizable": false,
+        "title": "Discord Instagram Integration Setup",
+        "width": 1200,
+        "height": 800
       }
     ],
     "security": {

@@ -1,0 +1,72 @@
+<div class="container">
+    <div class="header">
+        <h2 *ngIf="account.username || accountInput" id="username">
+            &#64;{{ account.username || accountInput }}
+        </h2>
+    </div>
+    <div class="body">
+        <div *ngIf="!account.username" class="account"></div>
+        <div *ngIf="account.username" class="account">
+            <img [src]="image" id="profile-pic" alt="Profile Photo" />
+            <p id="bio">{{ account.bio }}</p>
+        </div>
+    </div>
+    <div class="footer">
+        <div class="divider"></div>
+        <div id="info">
+            Input a valid & public Instagram username below. Once your chosen
+            account has loaded, integrate with a Discord developer bot token,
+            and select a chat prefix of your choosing to interact with your bot.
+        </div>
+        <div class="form-inputs">
+            <div id="account-row">
+                <input
+                    *ngIf="!account.username"
+                    [value]="accountInput"
+                    (input)="accountInput = getValue($event)"
+                    id="account-input"
+                    placeholder="Enter an account name..."
+                />
+                <button
+                    *ngIf="!account.username"
+                    id="account-search-button"
+                    (click)="searchAccount($event)"
+                >
+                    Select
+                </button>
+                <input
+                    *ngIf="account.username"
+                    [value]="prefixInput"
+                    (input)="prefixInput = getValue($event)"
+                    id="prefix-input"
+                    placeholder="Enter a prefix to interact with your bot..."
+                />
+            </div>
+            <div id="token-row">
+                <input
+                    [value]="tokenInput"
+                    (input)="tokenInput = getValue($event)"
+                    id="token-input"
+                    placeholder="Enter Discord dev token..."
+                />
+            </div>
+            <div id="build-row">
+                <button
+                    *ngIf="!isRunning"
+                    id="start-button"
+                    (click)="startServer($event)"
+                >
+                    Start
+                </button>
+                <button
+                    *ngIf="isRunning"
+                    id="stop-button"
+                    (click)="stopServer($event)"
+                >
+                    Stop
+                </button>
+            </div>
+        </div>
+    </div>
+    <p>{{ errorMessage }}</p>
+</div>
