@@ -1,52 +1,59 @@
 <div class="container">
-    <h1>Discord IG Bot Configuration</h1>
-    <h3>{{ isLoading }}</h3>
-    <div class="row">
-        <div *ngIf="account === null" class="no-account"></div>
+    <div class="header">
+        <h2 id="username">{{ account?.username || "" }}</h2>
+        <h3>{{ isLoading }}</h3>
+    </div>
+    <div class="body">
+        <div *ngIf="account === null" class="account"></div>
         <div *ngIf="account !== null" class="account">
-            <img [src]="image" class="logo" alt="Profile Photo" />
-            <h2>{{ account.username }}</h2>
-            <p>{{ account.bio }}</p>
+            <img [src]="image" id="profile-pic" alt="Profile Photo" />
+            <p id="bio">{{ account.bio }}</p>
         </div>
     </div>
-
-    <p>
-        Integrate your bot with a dev token, and select an Instagram account to
-        scrape from below.
-    </p>
-    <form class="form-inputs" (submit)="startServer($event, tokenInput.value)">
-        <div id="token-row">
-            <input
-                #tokenInput
-                id="token-input"
-                placeholder="Enter Discord dev token..."
-            />
+    <div class="footer">
+        <div class="divider"></div>
+        <div id="info">
+            Input a valid & public Instagram username below. Once your chosen
+            account has loaded, integrate with a Discord developer bot token,
+            and select a chat prefix of your choosing to interact with your bot.
         </div>
-        <div id="account-row">
-            <input
-                #accountInput
-                id="account-input"
-                placeholder="Enter an account name..."
-            />
-            <button
-                id="account-search-button"
-                (click)="searchAccount($event, accountInput.value)"
-            >
-                Search
-            </button>
-        </div>
-        <div id="build-row">
-            <button *ngIf="!isRunning" id="start-button" type="submit">
-                Start
-            </button>
-            <button
-                *ngIf="isRunning"
-                id="stop-button"
-                (click)="stopServer($event)"
-            >
-                Stop
-            </button>
-        </div>
-    </form>
+        <form
+            class="form-inputs"
+            (submit)="startServer($event, tokenInput.value)"
+        >
+            <div id="account-row">
+                <input
+                    #accountInput
+                    id="account-input"
+                    placeholder="Enter an account name..."
+                />
+                <button
+                    id="account-search-button"
+                    (click)="searchAccount($event, accountInput.value)"
+                >
+                    Select
+                </button>
+            </div>
+            <div id="token-row">
+                <input
+                    #tokenInput
+                    id="token-input"
+                    placeholder="Enter Discord dev token..."
+                />
+            </div>
+            <div id="build-row">
+                <button *ngIf="!isRunning" id="start-button" type="submit">
+                    Start
+                </button>
+                <button
+                    *ngIf="isRunning"
+                    id="stop-button"
+                    (click)="stopServer($event)"
+                >
+                    Stop
+                </button>
+            </div>
+        </form>
+    </div>
     <p>{{ errorMessage }}</p>
 </div>
