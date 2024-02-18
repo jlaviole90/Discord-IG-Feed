@@ -13,7 +13,6 @@ use serenity::model::prelude::*;
 use serenity::prelude::*;
 use std::env;
 
-mod auth;
 mod commands;
 mod events;
 mod igapi;

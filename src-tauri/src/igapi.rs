@@ -1,11 +1,15 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use crate::auth;
+use crate::events;
 use crate::models::{Embeds, IGAccount, Post, Root};
 use crate::proxy::*;
 use rand::Rng;
 use reqwest::{Client, Proxy};
+use serenity::http::Http;
+use serenity::model::channel::Message;
 use serenity::prelude::TypeMapKey;
+use std::sync::Arc;
+
 use std::time::Duration;
 
 pub struct IGChannel {
@@ -50,68 +54,83 @@ impl IGChannel {
             current_prt = cur_prx.port
         ))
         .unwrap()
-        .basic_auth(auth::get_prx_user().as_str(), auth::get_prx_pass().as_str())
+        .basic_auth(get_prx_user().as_str(), get_prx_pass().as_str())
     }
 
-    pub async fn deploy_proxy_server(&mut self) {
+    pub async fn deploy_proxy_server(&mut self, http: &Arc<Http>, msg: &Message) {
+        println!("Instagram feed initiated for account: @{}", self.account);
+        println!("User's feed will be checked every 120 seconds for new posts.");
+        let mut last_stmp: SystemTime = SystemTime::now();
         loop {
-            let latest_post = match Client::builder()
-                .proxy(self.fetch_proxies())
-                .user_agent(USER_AGENT)
-                .build()
-                .expect("Failed to build HTTP client... ")
-                // todo: get the user name!
-                .get(IG_HOST.to_owned() + self.account.as_str())
-                .send()
-                .await
-            {
-                Ok(resp) => match resp.json::<Root>().await {
-                    Ok(data) => data,
-                    Err(why) => {
-                        println!("Failed to decode IG response: \n{:?},\n", why);
-                        return;
-                    }
-                },
-                Err(why) => {
-                    println!("Failed to retrieve IG data.\n{:?}\n", why);
-                    return;
-                }
+            println!("Checking feed...");
+            self.get_latest().await;
+            if self.last_fetch != last_stmp {
+                println!("New post available.\nPosting now...");
+                last_stmp = self.last_fetch;
+                events::post_msg(http, &self.last_post.embeds, msg).await;
+            } else {
+                println!("No new posts found.");
             }
-            .data
-            .user
-            .edge_owner_to_timeline_media
-            .edges
-            .iter()
-            .map(|ed| ed.node.to_owned())
-            .filter(|nd| nd.pinned_for_users.len() <= 0)
-            .next()
-            .expect("Unable to parse JSON posts.");
-
-            // todo: insert proper username
-            let last_post = Post {
-                username: "".to_string(),
-                embeds: Embeds {
-                    description: latest_post
-                        .edge_media_to_caption
-                        .edges
-                        .first()
-                        .unwrap()
-                        .node
-                        .text
-                        .to_string(),
-                    image: if latest_post.is_video {
-                        latest_post.video_url.unwrap()
-                    } else {
-                        latest_post.display_url
-                    },
-                    timestamp: latest_post.taken_at_timestamp,
-                },
-            };
-
-            self.last_post = last_post;
-            self.last_fetch = SystemTime::now();
             tokio::time::sleep(Duration::from_secs(120)).await;
         }
+    }
+
+    pub async fn get_latest(&mut self) {
+        println!("Fetching latest...");
+        let latest_post = match Client::builder()
+            .proxy(self.fetch_proxies())
+            .user_agent(USER_AGENT)
+            .build()
+            .expect("Failed to build HTTP client... ")
+            .get(IG_HOST.to_owned() + self.account.as_str())
+            .send()
+            .await
+        {
+            Ok(resp) => match resp.json::<Root>().await {
+                Ok(data) => data,
+                Err(why) => {
+                    println!("Failed to decode IG response: \n{:?},\n", why);
+                    return;
+                }
+            },
+            Err(why) => {
+                println!("Failed to retrieve IG data.\n{:?}\n", why);
+                return;
+            }
+        }
+        .data
+        .user
+        .edge_owner_to_timeline_media
+        .edges
+        .iter()
+        .map(|ed| ed.node.to_owned())
+        .filter(|nd| nd.pinned_for_users.len() <= 0)
+        .next()
+        .expect("Unable to parse JSON posts.");
+
+        // todo: insert proper username
+        let last_post = Post {
+            username: self.account.to_string(),
+            embeds: Embeds {
+                description: latest_post
+                    .edge_media_to_caption
+                    .edges
+                    .first()
+                    .unwrap()
+                    .node
+                    .text
+                    .to_string(),
+                image: if latest_post.is_video {
+                    latest_post.video_url.unwrap()
+                } else {
+                    latest_post.display_url
+                },
+                timestamp: latest_post.taken_at_timestamp,
+            },
+        };
+
+        self.last_post = last_post;
+        self.last_fetch = SystemTime::now();
     }
 
     pub async fn search(&mut self, account: &str) -> Result<IGAccount, String> {

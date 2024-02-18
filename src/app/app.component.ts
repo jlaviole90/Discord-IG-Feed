@@ -17,18 +17,28 @@ export class AppComponent {
   isRunning: boolean = false;
   accountNotFound: boolean = false;
 
-  account: IGAccount | null = null;
+  accountInput: string = "";
+  prefixInput: string = "";
+  tokenInput: string = "";
+
+  account: IGAccount = DefaultAccount;
+
   image: any;
 
   errorMessage: string = "";
 
   constructor(private http: HttpClient) {}
 
-  searchAccount(event: Event, accountInput: string): void {
+  searchAccount(event: Event): void {
     event.preventDefault();
 
+    if (this.accountInput === "") {
+      this.errorMessage = "No account provided...";
+      return;
+    }
+
     this.isLoading = true;
-    invoke<IGAccount>("search_account", { account: accountInput })
+    invoke<IGAccount>("search_account", { account: this.accountInput })
       .then((acct) => {
         this.isLoading = false;
         this.accountNotFound = true;
@@ -41,16 +51,28 @@ export class AppComponent {
       .catch((err) => {
         this.isLoading = false;
         this.errorMessage = err;
-        this.account = null;
         this.accountNotFound = true;
       });
   }
 
-  startServer(event: SubmitEvent, token: string): void {
+  startServer(event: Event): void {
     event.preventDefault();
     this.isRunning = true;
 
-    invoke<boolean>("start_server", { token })
+    if (
+      this.tokenInput === "" ||
+      this.account.username === "" ||
+      this.prefixInput === ""
+    ) {
+      this.errorMessage = "Missing data!";
+      return;
+    }
+
+    invoke<boolean>("start_server", {
+      token: this.tokenInput,
+      account: this.account.username,
+      prefix: this.prefixInput,
+    })
       .then((isStarted) => {
         if (isStarted) {
           this.errorMessage = "";
@@ -86,6 +108,10 @@ export class AppComponent {
       });
   }
 
+  getValue(event: Event): string {
+    return (event.target as HTMLInputElement).value;
+  }
+
   private createImage(image: Blob) {
     let reader = new FileReader();
     reader.addEventListener(
@@ -102,22 +128,19 @@ export class AppComponent {
   }
 
   private getImage(): Observable<Blob> {
-    if (this.account === null) {
-      //this won't happen...
-      this.account = {
-        username: "",
-        profile_pic: "",
-        bio: "",
-      };
-    }
     return this.http.get(this.account.profile_pic, {
       responseType: "blob",
     });
   }
 }
 
-interface IGAccount {
+export interface IGAccount {
   username: string;
   profile_pic: string;
   bio: string;
 }
+export const DefaultAccount: IGAccount = {
+  username: "",
+  profile_pic: "",
+  bio: "",
+};

@@ -1,9 +1,6 @@
-// COMMAND PREFIX
-pub const JAMES: &str = "james ";
-
 // COMMANDS
 pub const TEST: &str = "very cool very swag";
-pub const NEW: &str = "new";
+pub const NEW: &str = "latest";
 pub const POSTS: &str = "begin feed";
 
 // CONST RESPONSES
