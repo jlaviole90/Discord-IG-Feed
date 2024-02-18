@@ -3,8 +3,6 @@
 
 use std::collections::HashSet;
 
-use crate::commands::JAMES;
-use proxy::IGChannel;
 use serenity::framework::standard::macros::help;
 use serenity::framework::standard::{
     help_commands, Args, CommandGroup, CommandResult, HelpOptions, StandardFramework,
@@ -18,6 +16,7 @@ use std::env;
 mod auth;
 mod commands;
 mod events;
+mod igapi;
 mod models;
 mod proxy;
 
@@ -52,8 +51,8 @@ async fn my_help(
 }
 
 #[tauri::command]
-async fn search_account(account: &str) -> Result<String, String> {
-    Ok(account.to_string())
+async fn search_account(account: &str) -> Result<models::IGAccount, String> {
+    igapi::IGChannel::default().search(account).await
 }
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
@@ -73,14 +72,15 @@ async fn start_server(token: &str, account: &str, prefix: &str) -> Result<bool, 
 
     let framework = StandardFramework::new()
         .help(&MY_HELP)
-        .configure(|c| c.on_mention(Some(bot_id)).prefixes([prefix, JAMES]));
+        .configure(|c| c.on_mention(Some(bot_id)).prefix(prefix));
 
     // Create a new instance of the Client, logging in as a bot. This will automatically prepend
     // your bot token with "Bot ", which is a requirement by Discord for bot users.
     let mut client = Client::builder(&token, INTENTS_A | INTENTS_B | INTENTS_C)
         .event_handler(events::Handler)
         .framework(framework)
-        .type_map_insert::<IGChannel>(account.to_string())
+        .type_map_insert::<igapi::IGChannel>(account.to_string())
+        .type_map_insert::<events::Handler>(prefix.to_string())
         .await
         .expect("Error creating client");
 

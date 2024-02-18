@@ -6,22 +6,28 @@ use serenity::framework::standard::CommandError;
 use serenity::http::Http;
 use serenity::model::gateway::Ready;
 use serenity::model::prelude::*;
+use serenity::prelude::TypeMapKey;
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
 
 use crate::commands::{JAMES, NEW, POSTS, TEST, TEST_RESP};
+use crate::igapi::IGChannel;
 use crate::models::{Embeds, Post};
-use crate::proxy::IGChannel;
 
 const DATE_FORMAT: &str = "%m-%d-%Y %H:%M";
 
 pub struct Handler;
+
+impl TypeMapKey for Handler {
+    type Value = String;
+}
+
 #[async_trait]
 impl EventHandler for Handler {
     // Message Event Handler
     async fn message(&self, ctx: Context, msg: Message) {
-        let account = ctx.data.read().await;
-        let mut ig_channel = IGChannel::init(account.get::<IGChannel>().unwrap());
+        let client_data = ctx.data.read().await;
+        let mut ig_channel = IGChannel::init(client_data.get::<IGChannel>().unwrap());
         ig_channel.deploy_proxy_server().await;
         /*
          *  Test command to verify the bot is running
@@ -53,13 +59,14 @@ impl EventHandler for Handler {
         if msg.content == format!("{prefix}{command}", prefix = JAMES, command = POSTS) {
             let mut last_stmp: SystemTime = SystemTime::now();
             loop {
-                println!("Good morning!");
+                println!("Checking IG feed...");
                 if ig_channel.last_fetch != last_stmp {
-                    println!("Very cool very swag I like it!");
+                    println!("New post available!");
                     last_stmp = ig_channel.last_fetch;
                     post_msg(&ctx.http, &ig_channel.last_post.embeds, &msg).await;
+                } else {
+                    println!("No new posts found.");
                 }
-                println!("zzzZZZzzzZZZzzzZZZ\n");
                 tokio::time::sleep(Duration::from_secs(120)).await;
             }
         }
@@ -85,7 +92,7 @@ async fn post_msg(http: &Arc<Http>, emb: &Embeds, msg: &Message) {
                     .to_string(),
                 desc = emb.description
             ));
-            return m;
+            m
         })
         .await
     {

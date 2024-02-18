@@ -1,5 +1,21 @@
 use serde::{Deserialize, Serialize};
 
+#[derive(Serialize)]
+pub struct IGAccount {
+    pub username: String,
+    pub profile_pic: String,
+    pub bio: String,
+}
+impl Default for IGAccount {
+    fn default() -> IGAccount {
+        IGAccount {
+            username: String::new(),
+            profile_pic: String::new(),
+            bio: String::new(),
+        }
+    }
+}
+
 pub struct Post {
     pub username: String,
     pub embeds: Embeds,
@@ -46,8 +62,12 @@ pub struct Data {
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct User {
+    pub biography: String,
     #[serde(rename = "edge_owner_to_timeline_media")]
     pub edge_owner_to_timeline_media: EdgeOwnerToTimelineMedia,
+    #[serde(rename = "profile_pic_url_hd")]
+    pub profile_pic_url_hd: String,
+    pub username: String,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
