@@ -5,7 +5,7 @@
                 &#64;{{ account.username || accountInput }}
             </h2>
             <div *ngIf="account.username" id="profile-pic-box">
-                <img [src]="image" id="profile-pic" alt="Profile Photo" />
+                <img [src]="imagePath" id="profile-pic" />
             </div>
             <p *ngIf="account.username" id="bio">{{ account.bio }}</p>
         </span>

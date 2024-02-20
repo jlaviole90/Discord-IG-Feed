@@ -3,6 +3,7 @@
 
 use std::collections::HashSet;
 
+use models::IGAccount;
 use serenity::framework::standard::macros::help;
 use serenity::framework::standard::{
     help_commands, Args, CommandGroup, CommandResult, HelpOptions, StandardFramework,
@@ -12,6 +13,9 @@ use serenity::model::channel::Message;
 use serenity::model::prelude::*;
 use serenity::prelude::*;
 use std::env;
+use std::fs;
+use std::io::Write;
+use tauri::Manager;
 
 mod commands;
 mod events;
@@ -50,12 +54,45 @@ async fn my_help(
 }
 
 #[tauri::command]
-async fn search_account(account: &str) -> Result<models::IGAccount, String> {
-    igapi::IGChannel::default().search(account).await
+async fn search_account(
+    account: &str,
+    app_handle: tauri::AppHandle,
+) -> Result<models::IGAccount, String> {
+    let acct_resp = igapi::IGChannel::default().search(account).await;
+
+    if acct_resp.0.is_err() {
+        return Err("Account not found!".to_string());
+    }
+    if acct_resp.1.is_empty() {
+        return acct_resp.0;
+    }
+
+    let mut acct_cp: IGAccount = acct_resp.0.unwrap().clone();
+
+    let file_path = app_handle
+        .path_resolver()
+        .app_data_dir()
+        .expect("Failed to find app data directory!")
+        .with_extension("jpg");
+
+    app_handle
+        .fs_scope()
+        .allow_file(&file_path)
+        .expect("Missing permissions to write file!");
+
+    let mut file = fs::OpenOptions::new()
+        .create(true)
+        .write(true)
+        .open(&file_path)
+        .unwrap();
+
+    file.write_all(acct_resp.1.as_slice())
+        .expect("Failed to write file!");
+
+    acct_cp.profile_pic = file_path.to_str().unwrap().to_string();
+    Ok(acct_cp)
 }
 
-// Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-// todo: possible to return a string streamof console output???
 #[tauri::command]
 async fn start_server(token: &str, account: &str, prefix: &str) -> Result<bool, String> {
     let http = Http::new(token);

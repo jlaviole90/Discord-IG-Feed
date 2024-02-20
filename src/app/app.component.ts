@@ -1,14 +1,12 @@
 import { Component } from "@angular/core";
 import { CommonModule } from "@angular/common";
-import { RouterOutlet } from "@angular/router";
 import { invoke } from "@tauri-apps/api/tauri";
-import { HttpClient, HttpClientModule } from "@angular/common/http";
-import { Observable } from "rxjs";
+import { convertFileSrc } from "@tauri-apps/api/tauri";
 
 @Component({
   selector: "app-root",
   standalone: true,
-  imports: [CommonModule, RouterOutlet, HttpClientModule],
+  imports: [CommonModule],
   templateUrl: "./app.component.html",
   styleUrl: "./app.component.css",
 })
@@ -20,14 +18,12 @@ export class AppComponent {
   accountInput: string = "";
   prefixInput: string = "";
   tokenInput: string = "";
-  account: IGAccount = DefaultAccount;
-  image: any;
+
+  account: IGAccount = BlankData;
+  imagePath: string = "";
 
   serverLogs: string = "";
-
   errorMessage: string = "";
-
-  constructor(private http: HttpClient) {}
 
   searchAccount(event: Event): void {
     event.preventDefault();
@@ -44,9 +40,7 @@ export class AppComponent {
         this.accountNotFound = true;
         this.errorMessage = "";
         this.account = acct;
-        this.getImage().subscribe((data: any) => {
-          this.createImage(data);
-        });
+        this.imagePath = convertFileSrc(this.account.profile_pic);
       })
       .catch((err) => {
         this.isLoading = false;
@@ -111,36 +105,15 @@ export class AppComponent {
   getValue(event: Event): string {
     return (event.target as HTMLInputElement).value;
   }
-
-  private createImage(image: Blob) {
-    let reader = new FileReader();
-    reader.addEventListener(
-      "load",
-      () => {
-        this.image = reader.result;
-      },
-      false,
-    );
-
-    if (image) {
-      reader.readAsDataURL(image);
-    }
-  }
-
-  private getImage(): Observable<Blob> {
-    return this.http.get(this.account.profile_pic, {
-      responseType: "blob",
-    });
-  }
 }
 
 export interface IGAccount {
   username: string;
-  profile_pic: string;
   bio: string;
+  profile_pic: string;
 }
-export const DefaultAccount: IGAccount = {
+export const BlankData: IGAccount = {
   username: "",
-  profile_pic: "",
   bio: "",
+  profile_pic: "",
 };

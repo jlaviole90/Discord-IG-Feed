@@ -126,7 +126,7 @@ impl IGChannel {
         self.last_post = last_post;
     }
 
-    pub async fn search(&mut self, account: &str) -> Result<IGAccount, String> {
+    pub async fn search(&mut self, account: &str) -> (Result<IGAccount, String>, Vec<u8>) {
         let user = match Client::builder()
             .proxy(self.fetch_proxies())
             .user_agent(USER_AGENT)
@@ -138,17 +138,46 @@ impl IGChannel {
         {
             Ok(resp) => match resp.json::<Root>().await {
                 Ok(data) => data,
-                Err(why) => return Err(format!("Failed to decode IG response: \n{:?},\n", why)),
+                Err(why) => {
+                    return (
+                        Err(format!("Failed to decode IG response: \n{:?},\n", why)),
+                        Vec::new(),
+                    )
+                }
             },
-            Err(why) => return Err(format!("Failed to retrieve IG data.\n{:?}\n", why)),
+            Err(why) => {
+                return (
+                    Err(format!("Failed to retrieve IG data.\n{:?}\n", why)),
+                    Vec::new(),
+                )
+            }
         }
         .data
         .user;
 
-        Ok(IGAccount {
-            username: user.username,
-            bio: user.biography,
-            profile_pic: user.profile_pic_url_hd,
-        })
+        return (
+            Ok(IGAccount {
+                username: user.username,
+                bio: user.biography,
+                profile_pic: user.profile_pic_url_hd.clone(),
+            }),
+            self.get_profile_pic(&user.profile_pic_url_hd).await,
+        );
+    }
+
+    async fn get_profile_pic(&mut self, url: &str) -> Vec<u8> {
+        Client::builder()
+            .proxy(self.fetch_proxies())
+            .user_agent(USER_AGENT)
+            .build()
+            .expect("Failed to build HTTP client... ")
+            .get(url)
+            .send()
+            .await
+            .expect("Error retrieving profile picture.")
+            .bytes()
+            .await
+            .expect("Error decoding profile picture.")
+            .to_vec()
     }
 }

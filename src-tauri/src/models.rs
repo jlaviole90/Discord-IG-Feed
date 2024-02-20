@@ -1,17 +1,17 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 pub struct IGAccount {
     pub username: String,
-    pub profile_pic: String,
     pub bio: String,
+    pub profile_pic: String,
 }
 impl Default for IGAccount {
     fn default() -> IGAccount {
         IGAccount {
             username: String::new(),
-            profile_pic: String::new(),
             bio: String::new(),
+            profile_pic: String::new(),
         }
     }
 }

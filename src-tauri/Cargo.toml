@@ -11,7 +11,7 @@ edition = "2021"
 tauri-build = { version = "1.5", features = [] }
 
 [dependencies]
-tauri = { version = "1.5", features = ["shell-open"] }
+tauri = { version = "1.5", features = [ "protocol-asset", "path-all", "fs-all", "shell-open"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 image = "0.24.7"
@@ -32,8 +32,17 @@ chrono = { version = "0.4.31" }
 select = "0.6.0"
 rand = "0.8.5"
 lazy_static = "1.4.0"
+base64 = "0.21.7"
+serde_bytes = "0.11.14"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem
 # DO NOT REMOVE!!
 custom-protocol = ["tauri/custom-protocol"]
+
+[profile.release]
+incremental = false
+codegen-units = 1
+panic = "abort"
+opt-level = "s"
+lto = true
