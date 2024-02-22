@@ -16,6 +16,7 @@ pub struct IGChannel {
     account: String,
     pub last_post: Post,
 }
+
 impl TypeMapKey for IGChannel {
     type Value = String;
 }
@@ -33,6 +34,7 @@ impl Default for IGChannel {
         }
     }
 }
+
 impl IGChannel {
     pub fn init(account: &str) -> Self {
         let mut this = IGChannel::default();

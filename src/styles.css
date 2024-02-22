@@ -78,6 +78,10 @@ button {
             width: 49%;
             height: 100%;
 
+            #username {
+		    margin-top: 10%;
+            }
+
             .removal-box {
                 height: 320px;
                 width: 320px;
@@ -103,14 +107,6 @@ button {
             }
             .trash-icon {
                 visibility: hidden;
-            }
-            #profile-pic {
-            }
-
-            #username {
-            }
-
-            #bio {
             }
         }
 
@@ -146,6 +142,7 @@ button {
 
                 #token-input {
                     width: 100%;
+		    margin-top: 10px;
                 }
             }
 
@@ -172,12 +169,6 @@ button {
 
                 button {
                     width: 100%;
-                }
-
-                #start-button {
-                }
-
-                #stop-button {
                 }
             }
         }
