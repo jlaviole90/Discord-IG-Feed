@@ -1,15 +1,24 @@
 <div class="container">
     <div class="body">
         <span id="account-box">
-            <h2 *ngIf="account.username || accountInput" id="username">
-                &#64;{{ account.username || accountInput }}
+            <h2 *ngIf="account.username" id="username">
+                &#64;{{ account.username }}
             </h2>
-            <div *ngIf="account.username" id="profile-pic-box">
-                <img [src]="imagePath" id="profile-pic" />
+            <div
+                *ngIf="account.username"
+                (click)="removeAccount()"
+                class="removal-box"
+            >
+                <img
+                    *ngIf="account.username"
+                    [src]="imagePath"
+                    id="profile-pic"
+                />
+                <fa-icon [icon]="faTrash" class="trash-icon"></fa-icon>
             </div>
             <p *ngIf="account.username" id="bio">{{ account.bio }}</p>
         </span>
-        <span id="server-log-box">{{ serverLogs }}</span>
+        <span id="server-log-box"> {{ serverLogs }} </span>
     </div>
     <div class="footer">
         <div class="divider"></div>
@@ -31,6 +40,7 @@
                     *ngIf="!account.username"
                     id="account-search-button"
                     (click)="searchAccount($event)"
+                    [disabled]="!accountInput"
                 >
                     Select
                 </button>
@@ -53,6 +63,7 @@
             <div id="build-row">
                 <button
                     *ngIf="!isRunning"
+                    [disabled]="!prefixInput && !tokenInput"
                     id="start-button"
                     (click)="startServer($event)"
                 >

@@ -41,15 +41,21 @@ button {
     box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
 }
 
-button {
+button:disabled {
+    opacity: 0.5;
+    background-color: lightgrey;
+    box-shadow: none;
+}
+
+button:not([disabled]) {
     cursor: pointer;
 }
 
-button:hover {
+button:not([disabled]):hover {
     border-color: #396cd8;
 }
 
-button:active {
+button:not([disabled]):active {
     border-color: #396cd8;
     background-color: #e8e8e8;
 }
@@ -71,15 +77,43 @@ button {
             float: left;
             width: 49%;
             height: 100%;
-            #profile-pic {
+
+            .removal-box {
                 height: 320px;
                 width: 320px;
+                border-radius: 10%;
+                border: solid 1px black;
+                box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
+                transform: translate(30%, 0);
+                overflow: hidden;
             }
+            .removal-box:hover {
+                background-color: lightgrey;
+                cursor: pointer;
+                #profile-pic {
+                    opacity: 0.3;
+                }
+                .trash-icon {
+                    z-index: 1000;
+                    position: relative;
+                    top: -60%;
+                    font-size: 4em;
+                    visibility: visible;
+                }
+            }
+            .trash-icon {
+                visibility: hidden;
+            }
+            #profile-pic {
+            }
+
             #username {
             }
+
             #bio {
             }
         }
+
         #server-log-box {
             float: right;
             width: 49%;
@@ -92,17 +126,20 @@ button {
         transform: translate(20%, 0);
         bottom: 50px;
         width: 70%;
+
         .divider {
             position: absolute;
             transform: translate(0, -15px);
             width: 100%;
             border: solid lightgray 1px;
         }
+
         #info {
             width: 87%;
             transform: translate(7.5%, 0);
             margin-bottom: 20px;
         }
+
         .form-inputs {
             #token-row {
                 display: flex;

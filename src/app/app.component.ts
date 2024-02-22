@@ -2,11 +2,13 @@ import { Component } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { invoke } from "@tauri-apps/api/tauri";
 import { convertFileSrc } from "@tauri-apps/api/tauri";
+import { FontAwesomeModule } from "@fortawesome/angular-fontawesome";
+import { faTrash } from "@fortawesome/free-solid-svg-icons";
 
 @Component({
   selector: "app-root",
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FontAwesomeModule],
   templateUrl: "./app.component.html",
   styleUrl: "./app.component.css",
 })
@@ -24,6 +26,8 @@ export class AppComponent {
 
   serverLogs: string = "";
   errorMessage: string = "";
+
+  faTrash = faTrash;
 
   searchAccount(event: Event): void {
     event.preventDefault();
@@ -47,6 +51,10 @@ export class AppComponent {
         this.errorMessage = err;
         this.accountNotFound = true;
       });
+  }
+
+  removeAccount(): void {
+    this.account = BlankData;
   }
 
   startServer(event: Event): void {
